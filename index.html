@@ -333,6 +333,33 @@
   }
   .formula-box strong { color:#1e3a5f; }
 
+
+  /* ── PMO UPDATE BUTTON ── */
+  .pmo-update-bar {
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .pmo-update-btn {
+    display:inline-flex; align-items:center; gap:8px;
+    background:#00a99d; color:#fff; border:none; border-radius:9px;
+    padding:10px 22px; font-size:0.88rem; font-weight:700;
+    cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(0,169,157,0.3);
+  }
+  .pmo-update-btn:hover { background:#008f84; transform:translateY(-1px); }
+  .pmo-update-btn:disabled { background:#94a3b8; cursor:not-allowed; transform:none; }
+  .pmo-update-btn svg { width:16px; height:16px; }
+  .pmo-update-btn.spinning svg { animation: spin 1s linear infinite; }
+  .pmo-status-msg {
+    font-size:0.82rem; color:#64748b; padding:6px 12px;
+    background:#f1f5f9; border-radius:6px; display:none;
+  }
+  .pmo-date-filter {
+    padding:7px 12px; border:1.5px solid #d1d5db; border-radius:7px;
+    font-size:0.88rem; color:#1e3a5f; font-weight:600; outline:none;
+    transition:border-color .2s; cursor:pointer;
+  }
+  .pmo-date-filter:focus { border-color:#00a99d; }
+
 </style>
 </head>
 <body>
@@ -503,82 +530,25 @@
 <div class="tab-pane active" id="tab-pmo">
 <div class="content" style="padding-top:28px">
 
-  <div class="pmo-date-badge">📅 01 de Junho de 2026</div>
+  <div class="pmo-update-bar">
+    <button class="pmo-update-btn" id="pmoUpdateBtn" onclick="atualizarExterna()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M4 4v5h5M20 20v-5h-5"/>
+        <path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/>
+      </svg>
+      Atualizar
+    </button>
+    <input type="date" class="pmo-date-filter" id="pmoDateFilter" onchange="atualizarExterna()" />
+    <span class="pmo-status-msg" id="pmoStatus"></span>
+  </div>
 
-  <div class="section-title">Resumo do Dia</div>
-  <div class="pmo-cards">
-
-    <div class="pmo-card">
-      <div class="pmo-card-name">Edvan Gomes da Silva</div>
-      <div class="pmo-card-score">333,0</div>
-      <div class="pmo-card-label">pontos no dia</div>
-      <div class="pmo-detail">
-        <div class="pmo-detail-row"><span>Postes auditados</span><span>—</span></div>
-        <div class="pmo-detail-row"><span>Deslocamento (h)</span><span>3,0 h</span></div>
-        <div class="pmo-detail-row"><span>Rota</span><span>Campina × Picuí</span></div>
-        <div class="pmo-detail-row"><span>Pts deslocamento</span><span>3 × 111 = 333</span></div>
-      </div>
+  <div id="pmo-dynamic-content">
+    <div style="text-align:center;padding:60px;color:#94a3b8;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin-bottom:12px">
+        <path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/>
+      </svg>
+      <br>Clique em <strong>Atualizar</strong> para carregar os dados do dia.
     </div>
-
-    <div class="pmo-card blue">
-      <div class="pmo-card-name">Bernardo Braz da Silva</div>
-      <div class="pmo-card-score">549,5</div>
-      <div class="pmo-card-label">pontos no dia (2 registros)</div>
-      <div class="pmo-detail">
-        <div class="pmo-detail-row"><span>Postes auditados</span><span>131</span></div>
-        <div class="pmo-detail-row"><span>Deslocamento (h)</span><span>2,0 h</span></div>
-        <div class="pmo-detail-row"><span>Pts postes</span><span>131 × 2,5 = 327,5</span></div>
-        <div class="pmo-detail-row"><span>Pts deslocamento</span><span>2 × 111 = 222</span></div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="section-title">Detalhamento dos Registros</div>
-
-  <div class="pmo-table-wrap">
-    <h3>Edvan Gomes da Silva — 01/06/2026</h3>
-    <p>Auditoria de projeto FTTH · Sem dupla</p>
-    <table class="pmo-table">
-      <thead><tr><th>Demanda</th><th>Qtd</th><th>Valor Unit.</th><th>Pontos</th></tr></thead>
-      <tbody>
-        <tr><td>Postes auditados</td><td>—</td><td>2,5</td><td class="pts">0</td></tr>
-        <tr><td>Deslocamento (Tarefas Extras/h)</td><td>3 h</td><td>111</td><td class="pts">333,0</td></tr>
-        <tr class="pmo-total-row"><td colspan="3">Total</td><td>333,0</td></tr>
-      </tbody>
-    </table>
-    <div style="margin-top:10px;font-size:0.78rem;color:#94a3b8;">📝 Observação: Viagem Campina × Picuí</div>
-  </div>
-
-  <div class="pmo-table-wrap">
-    <h3>Bernardo Braz da Silva — 01/06/2026</h3>
-    <p>Auditoria de postes + Auditoria de projeto FTTH · Sem dupla · 2 registros</p>
-    <table class="pmo-table">
-      <thead><tr><th>Registro</th><th>Postes</th><th>Desl. (h)</th><th>Pts Postes</th><th>Pts Desl.</th><th>Total</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Expansão - Sítio Chupadouro - Massaranduba PB</td>
-          <td>131</td><td>1 h</td>
-          <td class="pts-blue">327,5</td>
-          <td class="pts-blue">111,0</td>
-          <td class="pts-blue">438,5</td>
-        </tr>
-        <tr>
-          <td>CE Backbone Lagoa Seca → Alagoa Nova (50% feito)</td>
-          <td>—</td><td>1 h</td>
-          <td class="pts-blue">0</td>
-          <td class="pts-blue">111,0</td>
-          <td class="pts-blue">111,0</td>
-        </tr>
-        <tr class="pmo-total-row"><td colspan="4">Total</td><td colspan="2">549,5</td></tr>
-      </tbody>
-    </table>
-    <div style="margin-top:10px;font-size:0.78rem;color:#94a3b8;">📝 Obs. reg.1: Auditoria pré-projeto clusters — tempo maior por ramificações · Obs. reg.2: Auditoria não finalizada (~50% restante)</div>
-  </div>
-
-  <div class="formula-box">
-    <strong>Premissas de pontuação:</strong> Postes auditados × 2,5 &nbsp;|&nbsp; CTOs auditadas × 8 &nbsp;|&nbsp; Tarefas Extras/h × 111<br>
-    <strong>Fórmula Monday:</strong> <code>postes*2.5 + CTOs_aud*8 + CTOs_inst*125 + ... + desl_h*111</code>
   </div>
 
 </div>
@@ -3875,6 +3845,243 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
 }
+</script>
+
+
+<script>
+// ─── KPI Externa — Integração Monday.com ───────────────────────────────────
+const MONDAY_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s';
+const BOARD_ID     = '6570366248';
+
+function getTodayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function fetchMondayItems(dateFilter) {
+  const query = `
+    query {
+      items_page(
+        limit: 200,
+        board_id: ${BOARD_ID},
+        query_params: {
+          rules: [{
+            column_id: "data5",
+            compare_value: ["${dateFilter}"],
+            operator: any_of
+          }]
+        }
+      ) {
+        items {
+          id name
+          column_values(ids: [
+            "data5","sele__o_individual__1","n_mero1","n_meros62__1",
+            "n_mero5","n_meros7__1","n_meros__1","n_meros5__1",
+            "n_meros2__1","n_meros6__1","n_mero9","n_mero58",
+            "n_mero17","n_mero8","tarefas_extras__1","f_rmula4",
+            "color_mkswhsrd","color_mkswd204","lista_suspensa",
+            "numeric_mkwpbbr","numeric_mkwpzyfd","numeric_mkswhfwj","numeric_mkswej81"
+          ]) { id text value }
+        }
+      }
+    }
+  `;
+
+  const res = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': MONDAY_TOKEN,
+      'API-Version': '2024-01'
+    },
+    body: JSON.stringify({ query })
+  });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message);
+  return json.data.items_page.items;
+}
+
+function parseItem(item) {
+  const col = {};
+  item.column_values.forEach(c => { col[c.id] = c.text || ''; });
+  const pts = parseFloat(col['f_rmula4']) || 0;
+  return {
+    nome: item.name,
+    data: col['data5'],
+    tecnico: col['sele__o_individual__1'] || item.name,
+    servico: col['lista_suspensa'] || '',
+    dupla: col['color_mkswhsrd'] === 'Sim',
+    nomeDupla: col['color_mkswd204'] || '',
+    postes: parseFloat(col['n_mero1']) || 0,
+    ctosAud: parseFloat(col['n_meros62__1']) || 0,
+    ctosInst: parseFloat(col['n_mero5']) || 0,
+    desl: col['n_mero8'] ? parseFloat(col['n_mero8']) : null,
+    obs: col['tarefas_extras__1'] || '',
+    pts
+  };
+}
+
+function groupByTecnico(items) {
+  const map = {};
+  items.forEach(it => {
+    const k = it.tecnico;
+    if (!map[k]) map[k] = { tecnico: k, registros: [], totalPts: 0 };
+    map[k].registros.push(it);
+    map[k].totalPts += it.pts;
+  });
+  return Object.values(map).sort((a, b) => b.totalPts - a.totalPts);
+}
+
+function renderExterna(groups, dateStr) {
+  const container = document.getElementById('pmo-dynamic-content');
+  if (!container) return;
+
+  if (groups.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px;color:#94a3b8;font-size:0.9rem;">
+        Nenhum registro encontrado para ${fmtDate(dateStr)}.
+      </div>`;
+    return;
+  }
+
+  // Badge de data
+  let html = `<div class="pmo-date-badge">📅 ${fmtDate(dateStr)}</div>`;
+
+  // Cards de resumo
+  html += `<div class="section-title">Resumo do Dia</div><div class="pmo-cards">`;
+  const colors = ['', 'blue', '', 'blue', '', 'blue'];
+  groups.forEach((g, i) => {
+    const cls = colors[i % 2];
+    const totalPostes = g.registros.reduce((s, r) => s + r.postes, 0);
+    const totalDesl = g.registros.reduce((s, r) => s + (r.desl || 0), 0);
+    html += `
+      <div class="pmo-card ${cls}">
+        <div class="pmo-card-name">${g.tecnico}</div>
+        <div class="pmo-card-score">${g.totalPts.toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1})}</div>
+        <div class="pmo-card-label">pontos no dia · ${g.registros.length} registro(s)</div>
+        <div class="pmo-detail">
+          <div class="pmo-detail-row"><span>Postes auditados</span><span>${totalPostes || '—'}</span></div>
+          <div class="pmo-detail-row"><span>Deslocamento (h)</span><span>${totalDesl > 0 ? totalDesl.toFixed(2).replace('.',',') + ' h' : '—'}</span></div>
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+
+  // Tabelas detalhadas
+  html += `<div class="section-title">Detalhamento dos Registros</div>`;
+  groups.forEach(g => {
+    html += `
+      <div class="pmo-table-wrap">
+        <h3>${g.tecnico}</h3>
+        <p>Data: ${fmtDate(dateStr)}</p>
+        <table class="pmo-table">
+          <thead><tr>
+            <th>Serviço / Observação</th>
+            <th>Postes</th>
+            <th>CTOs aud.</th>
+            <th>Desl. (h)</th>
+            <th>Pts</th>
+          </tr></thead>
+          <tbody>`;
+    g.registros.forEach(r => {
+      html += `
+            <tr>
+              <td>${r.servico ? '<strong>' + r.servico + '</strong><br>' : ''}
+                  <span style="color:#64748b;font-size:0.78rem">${r.obs || '—'}</span></td>
+              <td>${r.postes || '—'}</td>
+              <td>${r.ctosAud || '—'}</td>
+              <td>${r.desl != null ? String(r.desl).replace('.',',') + ' h' : '—'}</td>
+              <td class="pts">${r.pts.toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+            </tr>`;
+    });
+    html += `
+            <tr class="pmo-total-row">
+              <td colspan="4">Total ${g.tecnico}</td>
+              <td>${g.totalPts.toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+  // Totalizador geral
+  const grandTotal = groups.reduce((s, g) => s + g.totalPts, 0);
+  html += `
+    <div class="pmo-table-wrap" style="border-left:5px solid #1e3a5f">
+      <h3>Consolidado do Dia</h3>
+      <table class="pmo-table">
+        <thead><tr><th>Técnico</th><th>Registros</th><th>Postes</th><th>Deslocamento</th><th>Pontuação</th></tr></thead>
+        <tbody>`;
+  groups.forEach(g => {
+    const tp = g.registros.reduce((s,r) => s+r.postes, 0);
+    const td = g.registros.reduce((s,r) => s+(r.desl||0), 0);
+    html += `<tr>
+      <td><strong>${g.tecnico}</strong></td>
+      <td>${g.registros.length}</td>
+      <td>${tp || '—'}</td>
+      <td>${td > 0 ? td.toFixed(2).replace('.',',') + ' h' : '—'}</td>
+      <td class="pts">${g.totalPts.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+    </tr>`;
+  });
+  html += `
+          <tr class="pmo-total-row">
+            <td colspan="4">TOTAL GERAL</td>
+            <td>${grandTotal.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  html += `
+    <div class="formula-box">
+      <strong>Premissas:</strong> Postes × 2,5 &nbsp;|&nbsp; CTOs auditadas × 8 &nbsp;|&nbsp; CTOs instaladas × 125 &nbsp;|&nbsp; Tarefas Extras/h × 111<br>
+      <strong>Fórmula Monday:</strong> <code>postes*2.5 + CTOs_aud*8 + CTOs_inst*125 + desl_h*111 + ...</code>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+async function atualizarExterna() {
+  const btn = document.getElementById('pmoUpdateBtn');
+  const status = document.getElementById('pmoStatus');
+  const dateInput = document.getElementById('pmoDateFilter');
+  const dateStr = dateInput ? dateInput.value : getTodayISO();
+
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg> Buscando...`;
+  status.style.display = 'inline-block';
+  status.textContent = 'Consultando Monday.com...';
+
+  try {
+    const items = await fetchMondayItems(dateStr);
+    const parsed = items.map(parseItem);
+    const groups = groupByTecnico(parsed);
+    renderExterna(groups, dateStr);
+    status.textContent = `✅ ${items.length} registro(s) carregado(s) em ${new Date().toLocaleTimeString('pt-BR')}`;
+  } catch (e) {
+    status.textContent = '❌ Erro: ' + e.message;
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg> Atualizar`;
+  }
+}
+
+// Auto-carregar ao abrir a aba Externa
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('pmoDateFilter');
+  if (dateInput) dateInput.value = getTodayISO();
+  atualizarExterna();
+});
 </script>
 
 </body>
