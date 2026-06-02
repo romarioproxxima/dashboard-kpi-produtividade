@@ -278,6 +278,61 @@
   }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TAB NAVIGATION ── */
+  .tab-nav {
+    display: flex; gap: 6px;
+    background: rgba(255,255,255,0.12);
+    padding: 8px 24px 0;
+    border-bottom: none;
+  }
+  .tab-btn {
+    padding: 10px 22px; font-size: 0.88rem; font-weight: 700;
+    border: none; border-radius: 8px 8px 0 0; cursor: pointer;
+    background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.75);
+    transition: all .2s; letter-spacing: 0.3px;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
+  .tab-btn.active { background: #ffffff; color: #1e3a5f; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── PMO TAB STYLES ── */
+  .pmo-date-badge {
+    display:inline-block; background:#00a99d; color:#fff;
+    border-radius:20px; padding:4px 16px; font-size:0.82rem;
+    font-weight:700; margin-bottom:18px;
+  }
+  .pmo-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; margin-bottom:28px; }
+  .pmo-card {
+    background:#fff; border-radius:14px; padding:22px 24px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.07); border-left:5px solid #00a99d;
+  }
+  .pmo-card.blue { border-left-color: #1e3a5f; }
+  .pmo-card-name { font-size:1.05rem; font-weight:800; color:#1e3a5f; margin-bottom:14px; }
+  .pmo-card-score { font-size:2.2rem; font-weight:900; color:#00a99d; line-height:1; }
+  .pmo-card.blue .pmo-card-score { color:#1e3a5f; }
+  .pmo-card-label { font-size:0.75rem; color:#94a3b8; margin-top:2px; margin-bottom:14px; }
+  .pmo-detail { font-size:0.82rem; color:#475569; border-top:1px solid #f1f5f9; padding-top:12px; }
+  .pmo-detail-row { display:flex; justify-content:space-between; padding:3px 0; }
+  .pmo-detail-row span:first-child { color:#64748b; }
+  .pmo-detail-row span:last-child { font-weight:700; color:#1e3a5f; }
+  .pmo-table-wrap { background:#fff; border-radius:14px; padding:22px 24px; box-shadow:0 2px 12px rgba(0,0,0,0.07); margin-bottom:28px; }
+  .pmo-table-wrap h3 { font-size:0.95rem; font-weight:800; color:#1e3a5f; margin-bottom:4px; }
+  .pmo-table-wrap p { font-size:0.78rem; color:#94a3b8; margin-bottom:14px; }
+  .pmo-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+  .pmo-table th { background:#f8fafc; color:#64748b; font-weight:700; padding:9px 12px; text-align:left; border-bottom:2px solid #e2e8f0; }
+  .pmo-table td { padding:9px 12px; border-bottom:1px solid #f1f5f9; color:#334155; }
+  .pmo-table tr:last-child td { border-bottom:none; }
+  .pmo-table .pts { font-weight:800; color:#00a99d; }
+  .pmo-table .pts-blue { font-weight:800; color:#1e3a5f; }
+  .pmo-total-row td { background:#f0fffe; font-weight:800; color:#1e3a5f; border-top:2px solid #00a99d; }
+  .formula-box {
+    background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;
+    padding:14px 18px; font-size:0.8rem; color:#475569; margin-bottom:28px;
+  }
+  .formula-box strong { color:#1e3a5f; }
+
 </style>
 </head>
 <body>
@@ -316,6 +371,13 @@
 </div>
 
 
+
+<div class="tab-nav">
+  <button class="tab-btn" onclick="switchTab('geogrid')">📡 Geogrid</button>
+  <button class="tab-btn active" onclick="switchTab('pmo')">📋 Produtividade Externas</button>
+</div>
+
+<div class="tab-pane" id="tab-geogrid">
 <div class="content">
 
   <!-- MONTH FILTER -->
@@ -435,6 +497,92 @@
   </div>
 
 </div>
+
+</div><!-- /tab-geogrid -->
+
+<div class="tab-pane active" id="tab-pmo">
+<div class="content" style="padding-top:28px">
+
+  <div class="pmo-date-badge">📅 01 de Junho de 2026</div>
+
+  <div class="section-title">Resumo do Dia</div>
+  <div class="pmo-cards">
+
+    <div class="pmo-card">
+      <div class="pmo-card-name">Edvan Gomes da Silva</div>
+      <div class="pmo-card-score">333,0</div>
+      <div class="pmo-card-label">pontos no dia</div>
+      <div class="pmo-detail">
+        <div class="pmo-detail-row"><span>Postes auditados</span><span>—</span></div>
+        <div class="pmo-detail-row"><span>Deslocamento (h)</span><span>3,0 h</span></div>
+        <div class="pmo-detail-row"><span>Rota</span><span>Campina × Picuí</span></div>
+        <div class="pmo-detail-row"><span>Pts deslocamento</span><span>3 × 111 = 333</span></div>
+      </div>
+    </div>
+
+    <div class="pmo-card blue">
+      <div class="pmo-card-name">Bernardo Braz da Silva</div>
+      <div class="pmo-card-score">549,5</div>
+      <div class="pmo-card-label">pontos no dia (2 registros)</div>
+      <div class="pmo-detail">
+        <div class="pmo-detail-row"><span>Postes auditados</span><span>131</span></div>
+        <div class="pmo-detail-row"><span>Deslocamento (h)</span><span>2,0 h</span></div>
+        <div class="pmo-detail-row"><span>Pts postes</span><span>131 × 2,5 = 327,5</span></div>
+        <div class="pmo-detail-row"><span>Pts deslocamento</span><span>2 × 111 = 222</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section-title">Detalhamento dos Registros</div>
+
+  <div class="pmo-table-wrap">
+    <h3>Edvan Gomes da Silva — 01/06/2026</h3>
+    <p>Auditoria de projeto FTTH · Sem dupla</p>
+    <table class="pmo-table">
+      <thead><tr><th>Demanda</th><th>Qtd</th><th>Valor Unit.</th><th>Pontos</th></tr></thead>
+      <tbody>
+        <tr><td>Postes auditados</td><td>—</td><td>2,5</td><td class="pts">0</td></tr>
+        <tr><td>Deslocamento (Tarefas Extras/h)</td><td>3 h</td><td>111</td><td class="pts">333,0</td></tr>
+        <tr class="pmo-total-row"><td colspan="3">Total</td><td>333,0</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;font-size:0.78rem;color:#94a3b8;">📝 Observação: Viagem Campina × Picuí</div>
+  </div>
+
+  <div class="pmo-table-wrap">
+    <h3>Bernardo Braz da Silva — 01/06/2026</h3>
+    <p>Auditoria de postes + Auditoria de projeto FTTH · Sem dupla · 2 registros</p>
+    <table class="pmo-table">
+      <thead><tr><th>Registro</th><th>Postes</th><th>Desl. (h)</th><th>Pts Postes</th><th>Pts Desl.</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Expansão - Sítio Chupadouro - Massaranduba PB</td>
+          <td>131</td><td>1 h</td>
+          <td class="pts-blue">327,5</td>
+          <td class="pts-blue">111,0</td>
+          <td class="pts-blue">438,5</td>
+        </tr>
+        <tr>
+          <td>CE Backbone Lagoa Seca → Alagoa Nova (50% feito)</td>
+          <td>—</td><td>1 h</td>
+          <td class="pts-blue">0</td>
+          <td class="pts-blue">111,0</td>
+          <td class="pts-blue">111,0</td>
+        </tr>
+        <tr class="pmo-total-row"><td colspan="4">Total</td><td colspan="2">549,5</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:10px;font-size:0.78rem;color:#94a3b8;">📝 Obs. reg.1: Auditoria pré-projeto clusters — tempo maior por ramificações · Obs. reg.2: Auditoria não finalizada (~50% restante)</div>
+  </div>
+
+  <div class="formula-box">
+    <strong>Premissas de pontuação:</strong> Postes auditados × 2,5 &nbsp;|&nbsp; CTOs auditadas × 8 &nbsp;|&nbsp; Tarefas Extras/h × 111<br>
+    <strong>Fórmula Monday:</strong> <code>postes*2.5 + CTOs_aud*8 + CTOs_inst*125 + ... + desl_h*111</code>
+  </div>
+
+</div>
+</div><!-- /tab-pmo -->
 
 <div class="footer">
   Proxxima Telecomunicações &nbsp;·&nbsp; KPI Produtividade Geogrid &nbsp;·&nbsp; Gerado automaticamente &nbsp;·&nbsp; Dados: Histórico Geogrid (zeus.geogridmaps.com.br)
@@ -3719,5 +3867,15 @@ function requestUpdate() {
 }
 
 </script>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+
 </body>
 </html>
