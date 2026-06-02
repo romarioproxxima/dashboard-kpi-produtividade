@@ -3912,18 +3912,35 @@ async function fetchMondayItems(dateFilter) {
   });
 }
 
+function calcPts(col) {
+  // Fórmula Monday: n_mero1*2.5 + n_meros62__1*8 + n_mero5*125 + n_meros5__1*500
+  //   + n_meros7__1*62.5 + n_meros__1*500 + n_meros2__1*6.25 + n_mero9*25
+  //   + n_mero58*25 + n_mero17*125 + n_mero8*111 + n_meros6__1*1
+  //   + numeric_mkswhfwj*6.945 + numeric_mkswej81*25
+  //   + numeric_mkwpbbr*125 + numeric_mkwpzyfd*250
+  const n = id => parseFloat(col[id]) || 0;
+  return n('n_mero1')*2.5
+       + n('n_meros62__1')*8
+       + n('n_mero5')*125
+       + n('n_meros5__1')*500
+       + n('n_meros7__1')*62.5
+       + n('n_meros__1')*500
+       + n('n_meros2__1')*6.25
+       + n('n_mero9')*25
+       + n('n_mero58')*25
+       + n('n_mero17')*125
+       + n('n_mero8')*111
+       + n('n_meros6__1')*1
+       + n('numeric_mkswhfwj')*6.945
+       + n('numeric_mkswej81')*25
+       + n('numeric_mkwpbbr')*125
+       + n('numeric_mkwpzyfd')*250;
+}
+
 function parseItem(item) {
   const col = {};
-  item.column_values.forEach(c => {
-    // Para coluna fórmula o valor está em value (não em text)
-    if (c.id === 'f_rmula4') {
-      try { col[c.id] = c.value ? String(JSON.parse(c.value)) : (c.text || '0'); }
-      catch(e) { col[c.id] = c.text || '0'; }
-    } else {
-      col[c.id] = c.text || '';
-    }
-  });
-  const pts = parseFloat(col['f_rmula4']) || 0;
+  item.column_values.forEach(c => { col[c.id] = c.text || ''; });
+  const pts = calcPts(col);
   return {
     nome: item.name,
     data: col['data5'],
