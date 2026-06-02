@@ -370,7 +370,6 @@
   .val-detail { font-size:0.72rem; color:#64748b; margin-top:4px; }
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -540,6 +539,22 @@
 <div class="tab-pane active" id="tab-pmo">
 <div class="content" style="padding-top:28px">
 
+  <!-- Modal de validação -->
+  <div id="validationModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:14px;padding:28px;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:1rem;font-weight:800;color:#1e3a5f;margin:0;">🔍 Validar KMZs com Claude</h3>
+        <button onclick="document.getElementById('validationModal').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#94a3b8;">×</button>
+      </div>
+      <p style="font-size:0.83rem;color:#475569;margin-bottom:12px;">Copie o prompt abaixo e cole no chat do Claude:</p>
+      <textarea id="validationPrompt" readonly style="width:100%;height:120px;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;font-size:0.82rem;color:#334155;resize:none;background:#f8fafc;box-sizing:border-box;"></textarea>
+      <button onclick="copyValidationPrompt()" style="margin-top:12px;width:100%;background:#00a99d;color:#fff;border:none;border-radius:8px;padding:10px;font-size:0.88rem;font-weight:700;cursor:pointer;">
+        📋 Copiar prompt
+      </button>
+      <div id="copyConfirm" style="display:none;text-align:center;margin-top:8px;font-size:0.8rem;color:#166534;font-weight:600;">✅ Copiado! Cole no chat do Claude.</div>
+    </div>
+  </div>
+
   <div class="pmo-update-bar">
     <button class="pmo-update-btn" id="pmoUpdateBtn" onclick="atualizarExterna()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -549,6 +564,9 @@
       Atualizar
     </button>
     <input type="date" class="pmo-date-filter" id="pmoDateFilter" onchange="atualizarExterna()" />
+    <button class="pmo-update-btn" id="validateKmzBtn" style="background:#1e3a5f;display:none" onclick="openValidationModal()">
+      🔍 Validar KMZs com Claude
+    </button>
     <span class="pmo-status-msg" id="pmoStatus"></span>
   </div>
 
@@ -3861,55 +3879,9 @@ function switchTab(name) {
 <script>
 
 // ─── KMZ Validation ──────────────────────────────────────────────────────────
+// Verifica via API Monday se o item tem KMZ anexado (sem tentar baixar — CORS)
 
-async function getAssetPublicUrl(assetId) {
-  const query = `{ assets(ids: [${assetId}]) { public_url name } }`;
-  const res = await fetch('https://api.monday.com/v2', {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json', 'Authorization': MONDAY_TOKEN, 'API-Version':'2024-01' },
-    body: JSON.stringify({ query })
-  });
-  const data = await res.json();
-  if (data.errors || !data.data.assets.length) return null;
-  return data.data.assets[0];
-}
-
-async function countKmzElements(publicUrl) {
-  // Baixar KMZ (zip contendo KML)
-  const res = await fetch(publicUrl);
-  if (!res.ok) throw new Error('Falha ao baixar KMZ');
-  const buf = await res.arrayBuffer();
-  const zip = await JSZip.loadAsync(buf);
-
-  // Encontrar o KML dentro do ZIP
-  const kmlFile = Object.keys(zip.files).find(n => n.endsWith('.kml'));
-  if (!kmlFile) throw new Error('KML não encontrado no KMZ');
-  const kmlText = await zip.files[kmlFile].async('string');
-
-  // Parsear o KML
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(kmlText, 'text/xml');
-  const placemarks = doc.querySelectorAll('Placemark');
-
-  let postes = 0, tas = 0, ceos = 0, ces = 0, linhas = 0, outros = 0;
-
-  placemarks.forEach(pm => {
-    // Ignorar LineStrings
-    if (pm.querySelector('LineString')) { linhas++; return; }
-    const nameEl = pm.querySelector('name');
-    const name = (nameEl ? nameEl.textContent : '').trim();
-
-    if (/^PT\d+/i.test(name) || /^PST/i.test(name)) postes++;
-    else if (/^TA\d*/i.test(name)) tas++;
-    else if (/^CEO/i.test(name)) ceos++;
-    else if (/^CE\d+/i.test(name)) ces++;
-    else outros++;
-  });
-
-  return { postes, tas, ceos, ces, linhas, outros, total: placemarks.length };
-}
-
-async function getItemAssetId(itemId) {
+async function checkItemHasKmz(itemId) {
   const query = `{ items(ids: [${itemId}]) { assets { id name } } }`;
   const res = await fetch('https://api.monday.com/v2', {
     method: 'POST',
@@ -3919,52 +3891,27 @@ async function getItemAssetId(itemId) {
   const data = await res.json();
   if (data.errors) return null;
   const assets = data.data.items[0]?.assets || [];
-  // Pegar somente KMZ/KML
   return assets.find(a => /\.(kmz|kml)$/i.test(a.name)) || null;
 }
 
-function renderValidationBadge(cellId, declared, found) {
+function renderValidationBadge(cellId, asset) {
   const cell = document.getElementById(cellId);
   if (!cell) return;
-  if (found === null) { cell.innerHTML = '<span class="val-warn">⚠️ Sem KMZ</span>'; return; }
-
-  const diff = declared - found.postes;
-  const pct = declared > 0 ? Math.abs(diff / declared * 100).toFixed(0) : 0;
-
-  let badge, detail;
-  if (declared === 0 && found.postes === 0) {
-    badge = '<span class="val-ok">✅ OK (sem postes)</span>';
-    detail = '';
-  } else if (diff === 0) {
-    badge = `<span class="val-ok">✅ Confere (${found.postes} postes)</span>`;
-    detail = '';
-  } else if (Math.abs(diff) <= 5 || pct <= 5) {
-    badge = `<span class="val-warn">⚠️ Divergência leve</span>`;
-    detail = `Declarado: ${declared} | KMZ: ${found.postes} | Δ ${diff > 0 ? '+' : ''}${diff} (${pct}%)`;
+  if (!asset) {
+    cell.innerHTML = '<span class="val-warn">⚠️ Sem KMZ</span>';
   } else {
-    badge = `<span class="val-err">❌ Divergência</span>`;
-    detail = `Declarado: ${declared} | KMZ: ${found.postes} | Δ ${diff > 0 ? '+' : ''}${diff} (${pct}%)`;
+    cell.innerHTML = `<span class="val-ok" title="${asset.name}">📎 KMZ anexado</span>`;
   }
-
-  if (found.tas > 0)   detail += ` | TAs: ${found.tas}`;
-  if (found.ceos > 0)  detail += ` | CEOs: ${found.ceos}`;
-  if (found.ces > 0)   detail += ` | CEs: ${found.ces}`;
-
-  cell.innerHTML = `<div class="val-cell">${badge}</div>${detail ? '<div class="val-detail">' + detail + '</div>' : ''}`;
 }
 
 async function validateKmzForItem(itemId, declaredPostes, cellId) {
   const cell = document.getElementById(cellId);
-  if (cell) cell.innerHTML = '<span class="val-loading">🔍 Verificando KMZ...</span>';
+  if (cell) cell.innerHTML = '<span class="val-loading" style="font-size:0.72rem">🔍...</span>';
   try {
-    const asset = await getItemAssetId(itemId);
-    if (!asset) { renderValidationBadge(cellId, declaredPostes, null); return; }
-    const assetData = await getAssetPublicUrl(asset.id);
-    if (!assetData?.public_url) { renderValidationBadge(cellId, declaredPostes, null); return; }
-    const counts = await countKmzElements(assetData.public_url);
-    renderValidationBadge(cellId, declaredPostes, counts);
+    const asset = await checkItemHasKmz(itemId);
+    renderValidationBadge(cellId, asset);
   } catch(e) {
-    if (cell) cell.innerHTML = `<span class="val-err">❌ Erro: ${e.message}</span>`;
+    if (cell) cell.innerHTML = '<span class="val-warn">⚠️ —</span>';
   }
 }
 
@@ -4201,12 +4148,15 @@ function renderExterna(groups, dateStr) {
 
   container.innerHTML = html;
 
-  // Iniciar validações KMZ em paralelo
+  // Iniciar verificação de KMZ em paralelo (só checa se existe, não baixa)
   if (window._pendingValidations && window._pendingValidations.length > 0) {
     window._pendingValidations.forEach(v => {
       validateKmzForItem(v.itemId, v.postes, v.cellId);
     });
     window._pendingValidations = [];
+    // Mostrar botão de validação
+    const vBtn = document.getElementById('validateKmzBtn');
+    if (vBtn) vBtn.style.display = 'inline-flex';
   }
 }
 
