@@ -360,7 +360,17 @@
   }
   .pmo-date-filter:focus { border-color:#00a99d; }
 
+
+  /* ── KMZ VALIDATION ── */
+  .val-ok    { background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:6px; padding:3px 10px; font-size:0.75rem; font-weight:700; white-space:nowrap; }
+  .val-warn  { background:#fef9c3; color:#854d0e; border:1px solid #fde047; border-radius:6px; padding:3px 10px; font-size:0.75rem; font-weight:700; white-space:nowrap; }
+  .val-err   { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:6px; padding:3px 10px; font-size:0.75rem; font-weight:700; white-space:nowrap; }
+  .val-loading { background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:6px; padding:3px 10px; font-size:0.75rem; font-weight:700; white-space:nowrap; }
+  .val-cell  { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .val-detail { font-size:0.72rem; color:#64748b; margin-top:4px; }
+
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -3849,6 +3859,115 @@ function switchTab(name) {
 
 
 <script>
+
+// ─── KMZ Validation ──────────────────────────────────────────────────────────
+
+async function getAssetPublicUrl(assetId) {
+  const query = `{ assets(ids: [${assetId}]) { public_url name } }`;
+  const res = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization': MONDAY_TOKEN, 'API-Version':'2024-01' },
+    body: JSON.stringify({ query })
+  });
+  const data = await res.json();
+  if (data.errors || !data.data.assets.length) return null;
+  return data.data.assets[0];
+}
+
+async function countKmzElements(publicUrl) {
+  // Baixar KMZ (zip contendo KML)
+  const res = await fetch(publicUrl);
+  if (!res.ok) throw new Error('Falha ao baixar KMZ');
+  const buf = await res.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+
+  // Encontrar o KML dentro do ZIP
+  const kmlFile = Object.keys(zip.files).find(n => n.endsWith('.kml'));
+  if (!kmlFile) throw new Error('KML não encontrado no KMZ');
+  const kmlText = await zip.files[kmlFile].async('string');
+
+  // Parsear o KML
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(kmlText, 'text/xml');
+  const placemarks = doc.querySelectorAll('Placemark');
+
+  let postes = 0, tas = 0, ceos = 0, ces = 0, linhas = 0, outros = 0;
+
+  placemarks.forEach(pm => {
+    // Ignorar LineStrings
+    if (pm.querySelector('LineString')) { linhas++; return; }
+    const nameEl = pm.querySelector('name');
+    const name = (nameEl ? nameEl.textContent : '').trim();
+
+    if (/^PT\d+/i.test(name) || /^PST/i.test(name)) postes++;
+    else if (/^TA\d*/i.test(name)) tas++;
+    else if (/^CEO/i.test(name)) ceos++;
+    else if (/^CE\d+/i.test(name)) ces++;
+    else outros++;
+  });
+
+  return { postes, tas, ceos, ces, linhas, outros, total: placemarks.length };
+}
+
+async function getItemAssetId(itemId) {
+  const query = `{ items(ids: [${itemId}]) { assets { id name } } }`;
+  const res = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization': MONDAY_TOKEN, 'API-Version':'2024-01' },
+    body: JSON.stringify({ query })
+  });
+  const data = await res.json();
+  if (data.errors) return null;
+  const assets = data.data.items[0]?.assets || [];
+  // Pegar somente KMZ/KML
+  return assets.find(a => /\.(kmz|kml)$/i.test(a.name)) || null;
+}
+
+function renderValidationBadge(cellId, declared, found) {
+  const cell = document.getElementById(cellId);
+  if (!cell) return;
+  if (found === null) { cell.innerHTML = '<span class="val-warn">⚠️ Sem KMZ</span>'; return; }
+
+  const diff = declared - found.postes;
+  const pct = declared > 0 ? Math.abs(diff / declared * 100).toFixed(0) : 0;
+
+  let badge, detail;
+  if (declared === 0 && found.postes === 0) {
+    badge = '<span class="val-ok">✅ OK (sem postes)</span>';
+    detail = '';
+  } else if (diff === 0) {
+    badge = `<span class="val-ok">✅ Confere (${found.postes} postes)</span>`;
+    detail = '';
+  } else if (Math.abs(diff) <= 5 || pct <= 5) {
+    badge = `<span class="val-warn">⚠️ Divergência leve</span>`;
+    detail = `Declarado: ${declared} | KMZ: ${found.postes} | Δ ${diff > 0 ? '+' : ''}${diff} (${pct}%)`;
+  } else {
+    badge = `<span class="val-err">❌ Divergência</span>`;
+    detail = `Declarado: ${declared} | KMZ: ${found.postes} | Δ ${diff > 0 ? '+' : ''}${diff} (${pct}%)`;
+  }
+
+  if (found.tas > 0)   detail += ` | TAs: ${found.tas}`;
+  if (found.ceos > 0)  detail += ` | CEOs: ${found.ceos}`;
+  if (found.ces > 0)   detail += ` | CEs: ${found.ces}`;
+
+  cell.innerHTML = `<div class="val-cell">${badge}</div>${detail ? '<div class="val-detail">' + detail + '</div>' : ''}`;
+}
+
+async function validateKmzForItem(itemId, declaredPostes, cellId) {
+  const cell = document.getElementById(cellId);
+  if (cell) cell.innerHTML = '<span class="val-loading">🔍 Verificando KMZ...</span>';
+  try {
+    const asset = await getItemAssetId(itemId);
+    if (!asset) { renderValidationBadge(cellId, declaredPostes, null); return; }
+    const assetData = await getAssetPublicUrl(asset.id);
+    if (!assetData?.public_url) { renderValidationBadge(cellId, declaredPostes, null); return; }
+    const counts = await countKmzElements(assetData.public_url);
+    renderValidationBadge(cellId, declaredPostes, counts);
+  } catch(e) {
+    if (cell) cell.innerHTML = `<span class="val-err">❌ Erro: ${e.message}</span>`;
+  }
+}
+
 // ─── KPI Externa — Integração Monday.com ───────────────────────────────────
 const MONDAY_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY0MjY2NzIwMiwiYWFpIjoxMSwidWlkIjozMTAwMDkyMSwiaWFkIjoiMjAyNi0wNC0wN1QxODoyNDozNC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzgwNjUxNywicmduIjoidXNlMSJ9.l0EKBBwMgKiUXQy0SiQ5v8wic9kD9Tqk80keoxdDB-s';
 const BOARD_ID     = '6570366248';
@@ -3942,6 +4061,7 @@ function parseItem(item) {
   item.column_values.forEach(c => { col[c.id] = c.text || ''; });
   const pts = calcPts(col);
   return {
+    itemId: item.id,
     nome: item.name,
     data: col['data5'],
     tecnico: col['sele__o_individual__1'] || item.name,
@@ -4019,7 +4139,8 @@ function renderExterna(groups, dateStr) {
             <th>Pts</th>
           </tr></thead>
           <tbody>`;
-    g.registros.forEach(r => {
+    g.registros.forEach((r, ri) => {
+      const valId = `val-${g.tecnico.replace(/\s+/g,'_')}-${ri}`;
       html += `
             <tr>
               <td>${r.servico ? '<strong>' + r.servico + '</strong><br>' : ''}
@@ -4028,7 +4149,11 @@ function renderExterna(groups, dateStr) {
               <td>${r.ctosAud || '—'}</td>
               <td>${r.desl != null ? String(r.desl).replace('.',',') + ' h' : '—'}</td>
               <td class="pts">${r.pts.toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+              <td id="${valId}"><span class="val-loading" style="font-size:0.72rem">aguardando...</span></td>
             </tr>`;
+      // Guardar para validação posterior
+      if (!window._pendingValidations) window._pendingValidations = [];
+      window._pendingValidations.push({ itemId: r.itemId, postes: r.postes, cellId: valId });
     });
     html += `
             <tr class="pmo-total-row">
@@ -4075,6 +4200,14 @@ function renderExterna(groups, dateStr) {
     </div>`;
 
   container.innerHTML = html;
+
+  // Iniciar validações KMZ em paralelo
+  if (window._pendingValidations && window._pendingValidations.length > 0) {
+    window._pendingValidations.forEach(v => {
+      validateKmzForItem(v.itemId, v.postes, v.cellId);
+    });
+    window._pendingValidations = [];
+  }
 }
 
 async function atualizarExterna() {
