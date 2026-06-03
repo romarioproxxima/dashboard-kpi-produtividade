@@ -436,6 +436,38 @@
 
 </div>
 
+
+  <!-- DETALHAMENTO POR DIA -->
+  <div class="timeline-card" style="margin-bottom:20px">
+    <h3>Detalhamento de Atividades por Dia</h3>
+    <p>Registros diários por colaborador — todos os tipos de cadastro realizados</p>
+    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:.82rem;color:#64748b;font-weight:500">Técnico:</span>
+      <select id="techFilter" style="border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:.82rem;background:#f8fafc">
+        <option value="all">Todos</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto">
+    <table id="dailyTable">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Colaborador</th>
+          <th>Postes</th>
+          <th>Caixas</th>
+          <th>Cabos</th>
+          <th>Terminais</th>
+          <th>Fusões</th>
+          <th>Outros</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="dailyBody"></tbody>
+    </table>
+    </div>
+    <div id="dailyInfo" style="font-size:.78rem;color:#94a3b8;margin-top:10px;text-align:right"></div>
+  </div>
+
 <div class="footer">
   Proxxima Telecomunicações &nbsp;·&nbsp; KPI Produtividade Geogrid &nbsp;·&nbsp; Gerado automaticamente &nbsp;·&nbsp; Dados: Histórico Geogrid (zeus.geogridmaps.com.br)
 </div>
@@ -3768,8 +3800,10 @@ function render(selMonth) {
 // ── Event listener & initial render ──────────────────────────────────────────
 document.getElementById('monthFilter').addEventListener('change', function() {
   render(this.value);
+  renderDailyTable(this.value, document.getElementById('techFilter')?.value || 'all');
 });
 render(document.getElementById('monthFilter').value || 'all');
+renderDailyTable(document.getElementById('monthFilter').value || 'all', 'all');
 
 
 // ── Update button ─────────────────────────────────────────────────────────────
@@ -3796,6 +3830,80 @@ function requestUpdate() {
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg> Atualizar Dados';
   }, 4000);
 }
+// ── Detalhamento por Dia ──────────────────────────────────────────────────────
+function renderDailyTable(selMonth, selTech) {
+  const recs = selMonth === 'all' ? records : records.filter(r => getMonthKey(r.d) === selMonth);
+  
+  // Populate tech filter options
+  const techSel = document.getElementById('techFilter');
+  const curTech = techSel.value;
+  const techs = [...new Set(recs.map(r => r.u))].sort();
+  techSel.innerHTML = '<option value="all">Todos</option>';
+  techs.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t;
+    if(t === curTech) o.selected = true;
+    techSel.appendChild(o);
+  });
+
+  const filtered = selTech === 'all' ? recs : recs.filter(r => r.u === selTech);
+
+  // Aggregate by date + user
+  const dayMap = {};
+  filtered.forEach(r => {
+    const key = r.d + '||' + r.u;
+    if (!dayMap[key]) dayMap[key] = {date:r.d, user:r.u, poste:0, caixa:0, cabo:0, terminal:0, fusao:0, outros:0, total:0};
+    const n = r.c || 1;
+    const t = r.t;
+    if(t === 'poste') dayMap[key].poste += n;
+    else if(t === 'caixa de emenda') dayMap[key].caixa += n;
+    else if(t === 'cabo' || t === 'cabo fibras') dayMap[key].cabo += n;
+    else if(t === 'terminal de atendimento') dayMap[key].terminal += n;
+    else if(t === 'fusão') dayMap[key].fusao += n;
+    else dayMap[key].outros += n;
+    dayMap[key].total += n;
+  });
+
+  const rows = Object.values(dayMap).sort((a,b) => {
+    const da = a.date.split('/').reverse().join('');
+    const db = b.date.split('/').reverse().join('');
+    return db.localeCompare(da) || a.user.localeCompare(b.user);
+  });
+
+  const TCOLORS = ['#0e2d5e','#00a99d','#e05a2b','#7c3aed','#dc2626','#0891b2','#059669'];
+  const allTechs = [...new Set(records.map(r=>r.u))].sort();
+
+  document.getElementById('dailyBody').innerHTML = rows.map(row => {
+    const ti = allTechs.indexOf(row.user);
+    const color = TCOLORS[ti >= 0 ? ti % TCOLORS.length : 0];
+    const initials = row.user.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('');
+    return `<tr>
+      <td style="white-space:nowrap;font-weight:600;color:#0e2d5e">${row.date}</td>
+      <td><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:${color};color:#fff;font-size:.65rem;font-weight:700;margin-right:6px">${initials}</span>${row.user.split(' ').slice(0,2).join(' ')}</td>
+      <td>${row.poste ? '<strong>'+row.poste.toLocaleString('pt-BR')+'</strong>' : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${row.caixa ? row.caixa.toLocaleString('pt-BR') : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${row.cabo ? row.cabo.toLocaleString('pt-BR') : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${row.terminal ? row.terminal.toLocaleString('pt-BR') : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${row.fusao ? row.fusao.toLocaleString('pt-BR') : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td>${row.outros ? row.outros.toLocaleString('pt-BR') : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td><strong style="color:#0e2d5e">${row.total.toLocaleString('pt-BR')}</strong></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dailyInfo').textContent = rows.length + ' entradas · ' + filtered.reduce((s,r)=>s+(r.c||1),0).toLocaleString('pt-BR') + ' cadastros';
+}
+
+// Hook into month filter change
+const origChangeHandler = document.getElementById('monthFilter').onchange;
+document.getElementById('monthFilter').addEventListener('change', function() {
+  renderDailyTable(this.value, document.getElementById('techFilter').value);
+});
+document.getElementById('techFilter').addEventListener('change', function() {
+  renderDailyTable(document.getElementById('monthFilter').value, this.value);
+});
+
+// Initial render
+renderDailyTable(document.getElementById('monthFilter').value || 'all', 'all');
 
 </script>
 </body>
