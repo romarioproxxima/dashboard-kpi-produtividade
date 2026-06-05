@@ -278,6 +278,18 @@
   }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+  .online-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.15); color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 8px;
+    padding: 8px 18px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all .2s;
+  }
+  .online-btn:hover { background: rgba(255,255,255,0.28); }
+  .online-btn svg { width: 15px; height: 15px; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
 </style>
 </head>
 <body>
@@ -292,27 +304,24 @@
       </div>
     </div>
     <div class="header-meta">
-      <div class="period-label">Período analisado</div>
-      
-    <a href="https://romarioproxxima.github.io/dashboard-kpi-produtividade/" 
-     target="_blank" class="update-btn" style="text-decoration:none;margin-right:8px;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10A15.3 15.3 0 0 1 8 12a15.3 15.3 0 0 1 4-10z"/>
-      </svg>
-      Ver Online
-    </a>
-    <button class="update-btn" onclick="requestUpdate()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <path d="M4 4v5h5M20 20v-5h-5"/>
-        <path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/>
-      </svg>
-      Atualizar Dados
-    </button>
-    <div id="updateStatus"></div>
-    <div class="period-value" id="periodDisplay">Nov/25–Jun/26</div>
+      <div class="period-badge">
+        <div class="period-label">PERÍODO ANALISADO</div>
+        <div class="period-value" id="periodDisplay">Nov/25–Jun/26</div>
+      </div>
+      <div class="btn-group">
+        <a href="https://romarioproxxima.github.io/dashboard-kpi-produtividade/" target="_blank" class="online-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10A15.3 15.3 0 0 1 8 12a15.3 15.3 0 0 1 4-10z"/></svg>
+          Ver Online
+        </a>
+        <button class="update-btn" onclick="requestUpdate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4 9a8 8 0 0 1 14.93-2M20 15a8 8 0 0 1-14.93 2"/></svg>
+          Atualizar Dados
+        </button>
+      </div>
+      <div id="updateStatus"></div>
     </div>
   </div>
+</div>
 </div>
 
 
