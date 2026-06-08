@@ -297,10 +297,31 @@
   .online-btn:hover { background: rgba(255,255,255,0.28); }
   .online-btn svg { width: 15px; height: 15px; }
   .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Tab nav */
+  .tab-nav{background:#071d3e;padding:8px 20px;display:flex;align-items:center;gap:10px}
+  .tab-nav-logo{width:28px;height:28px;background:#00a99d;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.78rem;color:#fff;letter-spacing:-1px;flex-shrink:0;margin-right:6px}
+  .tab-nav-title{color:rgba(255,255,255,.6);font-size:0.78rem;font-weight:600;margin-right:10px;white-space:nowrap}
+  .tab-nav a{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:7px;font-size:0.8rem;font-weight:600;text-decoration:none;border:1.5px solid rgba(255,255,255,.18);color:rgba(255,255,255,.7);transition:all .18s;white-space:nowrap}
+  .tab-nav a:hover{background:rgba(255,255,255,.15);color:#fff}
+  .tab-nav a.active{background:rgba(255,255,255,.92);color:#071d3e;border-color:#fff}
+  .tab-nav a svg{width:13px;height:13px}
 
 </style>
 </head>
 <body>
+
+<div class="tab-nav">
+  <div class="tab-nav-logo">PX</div>
+  <span class="tab-nav-title">Proxxima KPI</span>
+  <a href="https://romarioproxxima.github.io/dashboard-kpi-produtividade/" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    Aba Interna — Geogrid
+  </a>
+  <a href="https://romarioproxxima.github.io/dashboard-kpi-pmo/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10A15.3 15.3 0 0 1 8 12a15.3 15.3 0 0 1 4-10z"/></svg>
+    Aba Externa — Monday PMO
+  </a>
+</div>
 
 <div class="header">
   <div class="header-inner">
