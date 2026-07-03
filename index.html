@@ -506,6 +506,10 @@
       <select id="techFilter" style="border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:.82rem;background:#f8fafc">
         <option value="all">Todos</option>
       </select>
+      <button onclick="exportDailyCSV()" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid #0e2d5e;border-radius:6px;padding:5px 14px;font-size:.82rem;font-weight:600;background:#0e2d5e;color:#fff;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Exportar CSV
+      </button>
     </div>
     <div style="overflow-x:auto">
     <table id="dailyTable">
@@ -6232,6 +6236,40 @@ function renderVoalleMeta(selMonth){
       </td>
     </tr>`;
   }).join('');
+}
+
+// ── Exportar Detalhamento por Dia (CSV) ───────────────────────────────────────
+function exportDailyCSV(){
+  const selMonth=document.getElementById('monthFilter').value||'all';
+  const selTech=document.getElementById('techFilter').value||'all';
+  let recs=selMonth==='all'?records:records.filter(r=>getMonthKey(r.d)===selMonth);
+  if(selTech!=='all') recs=recs.filter(r=>r.u===selTech);
+  const dayMap={};
+  recs.forEach(r=>{
+    const key=r.d+'||'+r.u;
+    if(!dayMap[key]) dayMap[key]={date:r.d,user:r.u,poste:0,caixa:0,cabo:0,terminal:0,fusao:0,outros:0,voalle:0,total:0};
+    const n=r.c||1, t=r.t;
+    if(r.v) dayMap[key].voalle+=n;
+    else if(t==='poste') dayMap[key].poste+=n;
+    else if(t==='caixa de emenda') dayMap[key].caixa+=n;
+    else if(t==='cabo'||t==='cabo fibras') dayMap[key].cabo+=n;
+    else if(t==='terminal de atendimento') dayMap[key].terminal+=n;
+    else if(t==='fusão') dayMap[key].fusao+=n;
+    else dayMap[key].outros+=n;
+    dayMap[key].total+=n;
+  });
+  const rows=Object.values(dayMap).sort((a,b)=>{
+    const da=a.date.split('/').reverse().join(''), db=b.date.split('/').reverse().join('');
+    return db.localeCompare(da)||a.user.localeCompare(b.user);
+  });
+  let csv='\ufeffData;Colaborador;Postes;Caixas;Cabos;Terminais;Fusões;Outros;Voalle;Total\n';
+  rows.forEach(r=>{ csv+=[r.date,'"'+r.user+'"',r.poste,r.caixa,r.cabo,r.terminal,r.fusao,r.outros,r.voalle,r.total].join(';')+'\n'; });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='detalhamento_atividades_'+(selMonth==='all'?'todos':selMonth.replace('/','-'))+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 // Hook into month filter change
