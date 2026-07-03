@@ -363,6 +363,29 @@
   </div>
 
   <!-- KPI CARDS -->
+  <!-- METAS PONTUACAO -->
+  <div class="timeline-card" style="margin-bottom:20px">
+    <h3>Metas de Produtividade — Pontuação</h3>
+    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle FTTA 8 · Voalle FTTH 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>10 pts/hora de jornada</strong> — 90 pts/dia (jornada 9h) ou 60 pts/dia (jovens aprendizes 6h: João Victor e Maria Luiza) · Meta mensal = meta diária × dias úteis do mês. Média real Jun/26: 81,4 pts/dia.</p>
+    <div id="voalleCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0"></div>
+    <div style="overflow-x:auto">
+    <table id="voalleTable">
+      <thead>
+        <tr>
+          <th>Colaborador</th>
+          <th>Pontos no Mês</th>
+          <th>Pts/Dia Útil</th>
+          <th>Meta Diária</th>
+          <th>Meta do Mês</th>
+          <th>Atingimento</th>
+        </tr>
+      </thead>
+      <tbody id="voalleBody"></tbody>
+    </table>
+    </div>
+  </div>
+
+
   <div class="section-title">Resumo Geral</div>
   <div class="kpi-grid">
     <div class="kpi-card">
@@ -473,28 +496,6 @@
 
 </div>
 
-
-  <!-- METAS PONTUACAO -->
-  <div class="timeline-card" style="margin-bottom:20px">
-    <h3>Metas de Produtividade — Pontuação</h3>
-    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle FTTA 8 · Voalle FTTH 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>10 pts/hora de jornada</strong> — 90 pts/dia (jornada 9h) ou 60 pts/dia (jovens aprendizes 6h: João Victor e Maria Luiza) · Meta mensal = meta diária × dias úteis do mês. Média real Jun/26: 81,4 pts/dia.</p>
-    <div id="voalleCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0"></div>
-    <div style="overflow-x:auto">
-    <table id="voalleTable">
-      <thead>
-        <tr>
-          <th>Colaborador</th>
-          <th>Pontos no Mês</th>
-          <th>Pts/Dia Útil</th>
-          <th>Meta Diária</th>
-          <th>Meta do Mês</th>
-          <th>Atingimento</th>
-        </tr>
-      </thead>
-      <tbody id="voalleBody"></tbody>
-    </table>
-    </div>
-  </div>
 
   <!-- DETALHAMENTO POR DIA -->
   <div class="timeline-card" style="margin-bottom:20px">
