@@ -474,18 +474,18 @@
 </div>
 
 
-  <!-- METAS VOALLE -->
+  <!-- METAS PONTUACAO -->
   <div class="timeline-card" style="margin-bottom:20px">
-    <h3>Metas Voalle — Solicitações Encerradas</h3>
-    <p>Meta por colaborador: <strong>5 tarefas/dia útil</strong> · Meta mensal = 5 × dias úteis do mês (baseado na média real de Jun/26: 4,3/dia útil · 7,5/dia ativo)</p>
+    <h3>Metas de Produtividade — Pontuação</h3>
+    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>90 pts/dia útil</strong> por colaborador (média real Jun/26: 81,4 pts/dia) · Meta mensal = 90 × dias úteis do mês.</p>
     <div id="voalleCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0"></div>
     <div style="overflow-x:auto">
     <table id="voalleTable">
       <thead>
         <tr>
           <th>Colaborador</th>
-          <th>Realizado no Mês</th>
-          <th>Média/Dia Útil</th>
+          <th>Pontos no Mês</th>
+          <th>Pts/Dia Útil</th>
           <th>Meta Diária</th>
           <th>Meta do Mês</th>
           <th>Atingimento</th>
@@ -6159,9 +6159,14 @@ function renderDailyTable(selMonth, selTech) {
   document.getElementById('dailyInfo').textContent = rows.length + ' entradas · ' + filtered.reduce((s,r)=>s+(r.c||1),0).toLocaleString('pt-BR') + ' cadastros';
 }
 
-// ── Metas Voalle ──────────────────────────────────────────────────────────────
-const VOALLE_META_DIA = 5; // tarefas por colaborador por dia útil
-function bizDaysInMonth(mk){ // mk = "MM/YYYY"
+// ── Metas de Produtividade (Pontuação) ───────────────────────────────────────
+const META_PTS_DIA = 90; // pontos por colaborador por dia útil
+const TASK_PTS = {'poste':1,'cabo':2,'cabo fibras':2,'caixa de emenda':3,'terminal de atendimento':2,
+  'fusão':3,'equipamento':2,'estação':2,'grupo de acesso':1,'ponto de acesso':1,
+  'atendimento ao cliente':2,'comentário':0,'outros':0};
+const VOALLE_PTS = 5;
+function recPts(r){ return (r.v ? VOALLE_PTS : (TASK_PTS[r.t] ?? 0)) * (r.c || 1); }
+function bizDaysInMonth(mk){
   if(mk==='all') return 21;
   const [m,y]=mk.split('/').map(Number);
   let n=0;
@@ -6172,20 +6177,19 @@ function bizDaysInMonth(mk){ // mk = "MM/YYYY"
   return n;
 }
 function renderVoalleMeta(selMonth){
-  const vAll=records.filter(r=>r.v);
-  const v=selMonth==='all' ? vAll : vAll.filter(r=>getMonthKey(r.d)===selMonth);
+  const rs=selMonth==='all' ? records : records.filter(r=>getMonthKey(r.d)===selMonth);
   const bd=bizDaysInMonth(selMonth);
-  const metaMes=VOALLE_META_DIA*bd;
+  const metaMes=META_PTS_DIA*bd;
   const per={};
-  v.forEach(r=>{ per[r.u]=per[r.u]||{tot:0,dias:new Set()}; per[r.u].tot+=r.c; per[r.u].dias.add(r.d); });
-  const usersV=[...new Set(vAll.map(r=>r.u))].sort();
-  const totalReal=v.reduce((s,r)=>s+r.c,0);
+  rs.forEach(r=>{ const p=recPts(r); if(!per[r.u]) per[r.u]=0; per[r.u]+=p; });
+  const usersV=[...new Set(records.map(r=>r.u))].sort();
+  const totalPts=Object.values(per).reduce((s,x)=>s+x,0);
   const nU=usersV.length;
   const cards=[
-    {t:'Tarefas no Mês', v:totalReal.toLocaleString('pt-BR'), s:'solicitações encerradas'},
-    {t:'Meta Diária (equipe)', v:(VOALLE_META_DIA*nU).toLocaleString('pt-BR'), s:VOALLE_META_DIA+' por colaborador'},
-    {t:'Meta do Mês (equipe)', v:(metaMes*nU).toLocaleString('pt-BR'), s:bd+' dias úteis × '+VOALLE_META_DIA+' × '+nU},
-    {t:'Atingimento Equipe', v:(metaMes*nU?Math.round(totalReal/(metaMes*nU)*100):0)+'%', s:totalReal.toLocaleString('pt-BR')+' de '+(metaMes*nU).toLocaleString('pt-BR')}
+    {t:'Pontos no Mês (equipe)', v:Math.round(totalPts).toLocaleString('pt-BR'), s:'todas as tarefas pontuadas'},
+    {t:'Meta Diária', v:META_PTS_DIA.toLocaleString('pt-BR')+' pts', s:'por colaborador · equipe: '+(META_PTS_DIA*nU).toLocaleString('pt-BR')},
+    {t:'Meta do Mês', v:metaMes.toLocaleString('pt-BR')+' pts', s:bd+' dias úteis × '+META_PTS_DIA+' · equipe: '+(metaMes*nU).toLocaleString('pt-BR')},
+    {t:'Atingimento Equipe', v:(metaMes*nU?Math.round(totalPts/(metaMes*nU)*100):0)+'%', s:Math.round(totalPts).toLocaleString('pt-BR')+' de '+(metaMes*nU).toLocaleString('pt-BR')+' pts'}
   ];
   document.getElementById('voalleCards').innerHTML=cards.map(k=>
     `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px">
@@ -6194,15 +6198,15 @@ function renderVoalleMeta(selMonth){
       <div style="font-size:.7rem;color:#94a3b8">${k.s}</div>
     </div>`).join('');
   document.getElementById('voalleBody').innerHTML=usersV.map(u=>{
-    const d=per[u]||{tot:0,dias:new Set()};
-    const pct=metaMes?Math.min(100,Math.round(d.tot/metaMes*100)):0;
-    const pctReal=metaMes?Math.round(d.tot/metaMes*100):0;
+    const pts=Math.round(per[u]||0);
+    const pct=metaMes?Math.min(100,Math.round(pts/metaMes*100)):0;
+    const pctReal=metaMes?Math.round(pts/metaMes*100):0;
     const cor=pctReal>=100?'#059669':pctReal>=70?'#d97706':'#dc2626';
     return `<tr>
       <td style="font-weight:600">${u.split(' ').slice(0,2).join(' ')}</td>
-      <td><strong>${d.tot.toLocaleString('pt-BR')}</strong></td>
-      <td>${bd?(d.tot/bd).toLocaleString('pt-BR',{maximumFractionDigits:1}):'—'}</td>
-      <td>${VOALLE_META_DIA}</td>
+      <td><strong>${pts.toLocaleString('pt-BR')}</strong></td>
+      <td>${bd?(pts/bd).toLocaleString('pt-BR',{maximumFractionDigits:1}):'—'}</td>
+      <td>${META_PTS_DIA}</td>
       <td>${metaMes.toLocaleString('pt-BR')}</td>
       <td style="min-width:140px">
         <div style="display:flex;align-items:center;gap:8px">
