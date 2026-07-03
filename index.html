@@ -477,7 +477,7 @@
   <!-- METAS PONTUACAO -->
   <div class="timeline-card" style="margin-bottom:20px">
     <h3>Metas de Produtividade — Pontuação</h3>
-    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>90 pts/dia útil</strong> por colaborador (média real Jun/26: 81,4 pts/dia) · Meta mensal = 90 × dias úteis do mês.</p>
+    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>10 pts/hora de jornada</strong> — 90 pts/dia (jornada 9h) ou 60 pts/dia (jovem aprendiz 6h) · Meta mensal = meta diária × dias úteis do mês. Média real Jun/26: 81,4 pts/dia.</p>
     <div id="voalleCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0"></div>
     <div style="overflow-x:auto">
     <table id="voalleTable">
@@ -6159,7 +6159,10 @@ function renderDailyTable(selMonth, selTech) {
 }
 
 // ── Metas de Produtividade (Pontuação) ───────────────────────────────────────
-const META_PTS_DIA = 90; // pontos por colaborador por dia útil
+const META_PTS_HORA = 10; // pontos por hora de jornada
+const JORNADA_HORAS = {'JOÃO VICTOR BRITTO DA SILVA': 6}; // jovem aprendiz; demais = 9h
+function jornada(u){ return JORNADA_HORAS[u] || 9; }
+function metaDia(u){ return META_PTS_HORA * jornada(u); }
 const TASK_PTS = {'poste':1,'cabo':2,'cabo fibras':2,'caixa de emenda':3,'terminal de atendimento':2,
   'fusão':3,'equipamento':2,'estação':2,'grupo de acesso':1,'ponto de acesso':1,
   'atendimento ao cliente':2,'comentário':0,'outros':0};
@@ -6178,17 +6181,17 @@ function bizDaysInMonth(mk){
 function renderVoalleMeta(selMonth){
   const rs=selMonth==='all' ? records : records.filter(r=>getMonthKey(r.d)===selMonth);
   const bd=bizDaysInMonth(selMonth);
-  const metaMes=META_PTS_DIA*bd;
   const per={};
   rs.forEach(r=>{ const p=recPts(r); if(!per[r.u]) per[r.u]=0; per[r.u]+=p; });
   const usersV=[...new Set(records.map(r=>r.u))].sort();
   const totalPts=Object.values(per).reduce((s,x)=>s+x,0);
-  const nU=usersV.length;
+  const metaDiaEquipe=usersV.reduce((s,u)=>s+metaDia(u),0);
+  const metaMesEquipe=metaDiaEquipe*bd;
   const cards=[
     {t:'Pontos no Mês (equipe)', v:Math.round(totalPts).toLocaleString('pt-BR'), s:'todas as tarefas pontuadas'},
-    {t:'Meta Diária', v:META_PTS_DIA.toLocaleString('pt-BR')+' pts', s:'por colaborador · equipe: '+(META_PTS_DIA*nU).toLocaleString('pt-BR')},
-    {t:'Meta do Mês', v:metaMes.toLocaleString('pt-BR')+' pts', s:bd+' dias úteis × '+META_PTS_DIA+' · equipe: '+(metaMes*nU).toLocaleString('pt-BR')},
-    {t:'Atingimento Equipe', v:(metaMes*nU?Math.round(totalPts/(metaMes*nU)*100):0)+'%', s:Math.round(totalPts).toLocaleString('pt-BR')+' de '+(metaMes*nU).toLocaleString('pt-BR')+' pts'}
+    {t:'Meta Diária (equipe)', v:metaDiaEquipe.toLocaleString('pt-BR')+' pts', s:META_PTS_HORA+' pts/hora × jornada de cada um'},
+    {t:'Meta do Mês (equipe)', v:metaMesEquipe.toLocaleString('pt-BR')+' pts', s:bd+' dias úteis × '+metaDiaEquipe+' pts/dia'},
+    {t:'Atingimento Equipe', v:(metaMesEquipe?Math.round(totalPts/metaMesEquipe*100):0)+'%', s:Math.round(totalPts).toLocaleString('pt-BR')+' de '+metaMesEquipe.toLocaleString('pt-BR')+' pts'}
   ];
   document.getElementById('voalleCards').innerHTML=cards.map(k=>
     `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px">
@@ -6198,15 +6201,16 @@ function renderVoalleMeta(selMonth){
     </div>`).join('');
   document.getElementById('voalleBody').innerHTML=usersV.map(u=>{
     const pts=Math.round(per[u]||0);
-    const pct=metaMes?Math.min(100,Math.round(pts/metaMes*100)):0;
-    const pctReal=metaMes?Math.round(pts/metaMes*100):0;
+    const mDia=metaDia(u), mMes=mDia*bd;
+    const pct=mMes?Math.min(100,Math.round(pts/mMes*100)):0;
+    const pctReal=mMes?Math.round(pts/mMes*100):0;
     const cor=pctReal>=100?'#059669':pctReal>=70?'#d97706':'#dc2626';
     return `<tr>
-      <td style="font-weight:600">${u.split(' ').slice(0,2).join(' ')}</td>
+      <td style="font-weight:600">${u.split(' ').slice(0,2).join(' ')}<span style="color:#94a3b8;font-size:.72rem"> · ${jornada(u)}h</span></td>
       <td><strong>${pts.toLocaleString('pt-BR')}</strong></td>
       <td>${bd?(pts/bd).toLocaleString('pt-BR',{maximumFractionDigits:1}):'—'}</td>
-      <td>${META_PTS_DIA}</td>
-      <td>${metaMes.toLocaleString('pt-BR')}</td>
+      <td>${mDia}</td>
+      <td>${mMes.toLocaleString('pt-BR')}</td>
       <td style="min-width:140px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${cor}"></div></div>
