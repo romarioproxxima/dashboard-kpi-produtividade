@@ -5719,6 +5719,9 @@ const records = [
   {u:"Yuri Morais de Farias",d:"30/06/2026",h:16,t:"atendimento ao cliente",c:4,v:"FTTH"},
   {u:"Yuri Morais de Farias",d:"30/06/2026",h:17,t:"atendimento ao cliente",c:2,v:"FTTA"}
 ];
+// Remove eventos que não pontuam (login/logout, conversões, pastas, comentários)
+for(let __i=records.length-1;__i>=0;__i--){const __t=records[__i].t;if(!records[__i].v&&(__t==='outros'||__t==='comentário'))records.splice(__i,1);}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTES
