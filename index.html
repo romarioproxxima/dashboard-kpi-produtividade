@@ -366,7 +366,7 @@
   <!-- METAS PONTUACAO -->
   <div class="timeline-card" style="margin-bottom:20px">
     <h3>Metas de Produtividade — Pontuação</h3>
-    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle FTTA 8 · Voalle FTTH 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 (Outros/Comentário não pontuam). Meta: <strong>10 pts/hora de jornada</strong> — 90 pts/dia (jornada 9h) ou 60 pts/dia (jovens aprendizes 6h: João Victor e Maria Luiza) · Meta mensal = meta diária × dias úteis do mês. Média real Jun/26: 81,4 pts/dia.</p>
+    <p>Cada tarefa vale pontos por complexidade: <strong>Voalle FTTA 8 · Voalle FTTH 5</strong> · Caixa de Emenda 3 · Fusão 3 · Cabo 2 · Terminal/CTO 2 · Equipamento 2 · Estação 2 · Atendimento 2 · Poste 1 · Grupo/Ponto de Acesso 1 · <strong>Operações em massa</strong> (≥20 itens do mesmo tipo na mesma hora: importação KMZ, conversão ou movimentação em lote) contam como <strong>1 tarefa</strong>. Meta: <strong>10 pts/hora de jornada</strong> — 90 pts/dia (jornada 9h) ou 60 pts/dia (jovens aprendizes 6h: João Victor e Maria Luiza) · Meta mensal = meta diária × dias úteis do mês. Média real Jun/26: 81,4 pts/dia.</p>
     <div id="voalleCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0"></div>
     <div style="overflow-x:auto">
     <table id="voalleTable">
@@ -5719,8 +5719,20 @@ const records = [
   {u:"Yuri Morais de Farias",d:"30/06/2026",h:16,t:"atendimento ao cliente",c:4,v:"FTTH"},
   {u:"Yuri Morais de Farias",d:"30/06/2026",h:17,t:"atendimento ao cliente",c:2,v:"FTTA"}
 ];
-// Remove eventos que não pontuam (login/logout, conversões, pastas, comentários)
-for(let __i=records.length-1;__i>=0;__i--){const __t=records[__i].t;if(!records[__i].v&&(__t==='outros'||__t==='comentário'))records.splice(__i,1);}
+// Regra de lote: >=20 itens do mesmo tipo na mesma hora = operação em massa = 1 tarefa
+// Conversões/movimentações em massa ('outros' com >=20/h) viram 1 tarefa; logins/comentários saem
+const LOTE_MIN=20;
+for(let __i=records.length-1;__i>=0;__i--){
+  const __r=records[__i];
+  if(__r.v) continue;
+  if(__r.t==='comentário'){records.splice(__i,1);continue;}
+  if(__r.t==='outros'){
+    if(__r.c>=LOTE_MIN){__r.t='operação em massa';__r.lote=1;__r.c=1;}
+    else records.splice(__i,1);
+    continue;
+  }
+  if(__r.c>=LOTE_MIN){__r.lote=1;__r.c=1;}
+}
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6183,7 +6195,7 @@ const META_PTS_HORA = 10; // pontos por hora de jornada
 const JORNADA_HORAS = {'JOÃO VICTOR BRITTO DA SILVA': 6, 'MARIA LUIZA ALVES DE MOURA': 6}; // jovens aprendizes; demais = 9h
 function jornada(u){ return JORNADA_HORAS[u] || 9; }
 function metaDia(u){ return META_PTS_HORA * jornada(u); }
-const TASK_PTS = {'poste':1,'cabo':2,'cabo fibras':2,'caixa de emenda':3,'terminal de atendimento':2,
+const TASK_PTS = {'operação em massa':2,'poste':1,'cabo':2,'cabo fibras':2,'caixa de emenda':3,'terminal de atendimento':2,
   'fusão':3,'equipamento':2,'estação':2,'grupo de acesso':1,'ponto de acesso':1,
   'atendimento ao cliente':2,'comentário':0,'outros':0};
 const VOALLE_PTS = {FTTA:8, FTTH:5};
