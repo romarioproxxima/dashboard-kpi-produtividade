@@ -6215,7 +6215,7 @@ function renderVoalleMeta(selMonth){
   const bd=bizDaysInMonth(selMonth);
   const per={};
   rs.forEach(r=>{ const p=recPts(r); if(!per[r.u]) per[r.u]=0; per[r.u]+=p; });
-  const usersV=[...new Set(records.map(r=>r.u))].sort();
+  const usersV=[...new Set(records.map(r=>r.u))].sort((a,b)=>(per[b]||0)-(per[a]||0));
   const totalPts=Object.values(per).reduce((s,x)=>s+x,0);
   const metaDiaEquipe=usersV.reduce((s,u)=>s+metaDia(u),0);
   const metaMesEquipe=metaDiaEquipe*bd;
